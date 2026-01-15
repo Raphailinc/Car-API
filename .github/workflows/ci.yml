@@ -35,4 +35,4 @@ jobs:
       - name: Tests
         env:
           DATABASE_URL: sqlite://
-        run: pytest
+        run: pytest --cov=kanban --cov-report=term-missing

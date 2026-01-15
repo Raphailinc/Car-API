@@ -34,6 +34,35 @@ pytest
 - `DELETE /cars/<id>` — удалить.
 - `DELETE /cars/delete-all` — удалить все.
 
+### Пример запроса/ответа
+```bash
+POST /cars
+{
+  "brand": "Toyota",
+  "model": "Модель A",
+  "year": 2022,
+  "color": "blue",
+  "engine_power": 200,
+  "configuration": "Комфорт"
+}
+```
+Ответ `201`:
+```json
+{"id":1,"brand":"Toyota","model":"Модель A","year":2022,"color":"blue","engine_power":200,"vin":"<auto>","configuration":"Комфорт","description":null}
+```
+
+## Архитектура
+- `kanban/` — app factory, модели, схемы Marshmallow, маршруты `/cars`, утилиты (VIN).
+- `manage.py` — точка входа (локально/в Docker), создаёт БД при старте.
+- `tests/` — pytest с SQLite in-memory, покрывает CRUD и уникальность VIN.
+- `.env`/`config.py` — загрузка DATABASE_URL, переключение SQLite/Postgres.
+
+## Quality
+- Линт: `ruff check .`
+- Формат: `black --check .`
+- Тесты: `pytest` (in-memory SQLite)
+- CI: GitHub Actions (`ci.yml`) — lint + tests на Python 3.11.
+
 Значения `model`: `Модель A|Модель B|Модель C`. `configuration`: `Базовая|Комфорт|Максимальная`. VIN проверяется на длину 17, при отсутствии генерируется автоматически.
 
 ## Тесты

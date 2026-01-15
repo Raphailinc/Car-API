@@ -20,6 +20,7 @@ def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
     ma.init_app(app)
 
     from .routes import bp as api_bp
+
     app.register_blueprint(api_bp)
 
     with app.app_context():

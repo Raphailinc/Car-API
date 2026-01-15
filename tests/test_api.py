@@ -2,7 +2,6 @@ import json
 import pytest
 
 from kanban import create_app, db
-from kanban.models import Car
 
 
 @pytest.fixture()

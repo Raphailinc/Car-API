@@ -1,4 +1,5 @@
 ![CI](https://github.com/Raphailinc/Car-API/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://img.shields.io/codecov/c/github/Raphailinc/Car-API?label=coverage)
 
 # Car API
 
@@ -62,6 +63,25 @@ POST /cars
 - Формат: `black --check .`
 - Тесты: `pytest` (in-memory SQLite)
 - CI: GitHub Actions (`ci.yml`) — lint + tests на Python 3.11.
+
+## Интеграция
+Пример вызова API из Python:
+```python
+import requests
+
+base = "http://localhost:8000"
+car = {
+    "brand": "Toyota",
+    "model": "Модель A",
+    "year": 2023,
+    "color": "blue",
+    "engine_power": 200,
+    "configuration": "Комфорт",
+}
+resp = requests.post(f"{base}/cars", json=car, timeout=5)
+resp.raise_for_status()
+print(resp.json())
+```
 
 Значения `model`: `Модель A|Модель B|Модель C`. `configuration`: `Базовая|Комфорт|Максимальная`. VIN проверяется на длину 17, при отсутствии генерируется автоматически.
 

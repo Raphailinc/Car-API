@@ -1,4 +1,4 @@
-# Kanban — Car API
+# Car API
 
 Flask API для CRUD по автомобилям с валидацией (Marshmallow) и конфигом через `.env`. По умолчанию использует SQLite, можно переключить на PostgreSQL через переменную `DATABASE_URL`.
 

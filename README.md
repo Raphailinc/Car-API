@@ -1,57 +1,31 @@
-# Проект Kanban
+# Kanban — Car API
 
-Этот проект представляет собой простую веб-приложение для отслеживания информации о машинах с использованием технологий Flask и SQLAlchemy.
+Flask API для CRUD по автомобилям с валидацией (Marshmallow) и конфигом через `.env`. По умолчанию использует SQLite, можно переключить на PostgreSQL через переменную `DATABASE_URL`.
 
-## Как запустить проект
-
-### Шаг 1: Установка зависимостей
-
-Перед запуском проекта убедитесь, что у вас установлены все необходимые зависимости. Выполните следующую команду:
-
+## Установка и запуск
 ```bash
+python -m venv .venv
+. .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env   # при необходимости правим DATABASE_URL/PORT
+python manage.py       # запустит на 8000
 ```
 
-### Шаг 2: Создание базы данных
+## API
+- `GET /cars` — список машин.
+- `POST /cars` — создать (JSON: brand, model, year, color, engine_power, configuration, vin?, description).
+- `PUT /cars/<id>` — обновить (частичный payload).
+- `DELETE /cars/<id>` — удалить.
+- `DELETE /cars/delete-all` — удалить все.
 
-Проект использует PostgreSQL для хранения данных. Убедитесь, что у вас установлен и запущен PostgreSQL. Затем создайте базу данных с именем car_database. Вы можете изменить параметры подключения к базе данных в файле app.py в строке:
+Значения `model`: `Модель A|Модель B|Модель C`. `configuration`: `Базовая|Комфорт|Максимальная`. VIN проверяется на длину 17, при отсутствии генерируется автоматически.
 
-```python
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:KappaPride@localhost/car_database'
-```
-
-### Шаг 3: Запуск приложения
-
-Теперь вы можете запустить приложение. Выполните следующую команду:
-
+## Тесты
 ```bash
-python manage.py
+pytest
 ```
 
-Приложение будет доступно по адресу http://localhost:5000.
-
-### Использование API
-
-Проект предоставляет простой API для управления данными о машинах.
-
-#### Получение списка машин
-
-Отправьте GET-запрос по адресу /cars:
-
-```bash
-curl http://localhost:5000/cars
-```
-
-#### Добавление новой машины
-
-Отправьте POST-запрос по адресу /cars с данными в формате JSON:
-
-```bash
-curl -X POST -H "Content-Type: application/json" -d '{"brand":"Toyota","model":"MODEL_A","year":2022,"color":"blue","engine_power":200,"vin":"12345678901234567","configuration":"COMFORT","description":"Some description"}' http://localhost:5000/cars
-```
-
-И так далее...
-
-## Разработка и поддержка
-
-Проект разработан и поддерживается [Кямиль].
+## Примечания
+- Конфиг загружается из `.env` (см. `.env.example`).
+- База создаётся автоматически при старте.
+- Уникальность VIN соблюдается.

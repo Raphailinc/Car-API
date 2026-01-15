@@ -9,3 +9,6 @@ cars.db
 *.db
 Dockerfile
 docker-compose.yml
+.env
+*.env
+.env.*

@@ -1,14 +1,30 @@
-from flask import Blueprint, jsonify, request
-from sqlalchemy.exc import IntegrityError
+from flask import Blueprint, current_app, jsonify, request
+from marshmallow import ValidationError
+from sqlalchemy.exc import DataError, IntegrityError
 
 from . import db
-from .models import Car, CarConfiguration, CarModelEnum
+from .models import Car
 from .schemas import CarSchema
 from .utils import generate_vin
 
 bp = Blueprint("api", __name__, url_prefix="/cars")
 car_schema = CarSchema()
 cars_schema = CarSchema(many=True)
+
+
+def validation_error_response(errors: dict[str, list[str]]):
+    return jsonify({"error": "ValidationError", "fields": errors}), 400
+
+
+def enforce_trusted_delete_origin():
+    """Restrict destructive requests to trusted origins when Origin is present."""
+    origin = request.headers.get("Origin")
+    if not origin:
+        return None
+    trusted_origins = current_app.config.get("CORS_TRUSTED_ORIGINS", [])
+    if origin not in trusted_origins:
+        return jsonify({"error": "Forbidden", "message": "Origin not allowed"}), 403
+    return None
 
 
 @bp.route("", methods=["GET"])
@@ -20,31 +36,32 @@ def list_cars():
 @bp.route("", methods=["POST"])
 def create_car():
     payload = request.get_json() or {}
-    errors = car_schema.validate(payload)
-    if errors:
-        return jsonify({"errors": errors}), 400
+    try:
+        data = car_schema.load(payload)
+    except ValidationError as err:
+        return validation_error_response(err.messages)
 
-    model_enum = CarModelEnum(payload["model"])
-    config_enum = CarConfiguration(payload["configuration"])
-
-    vin = payload.get("vin") or generate_vin()
+    vin = data.pop("vin", None) or generate_vin()
 
     car = Car(
-        brand=payload["brand"],
-        model=model_enum,
-        year=payload["year"],
-        color=payload["color"],
-        engine_power=payload["engine_power"],
+        brand=data["brand"],
+        model=data["model"],
+        year=data["year"],
+        color=data["color"],
+        engine_power=data["engine_power"],
         vin=vin,
-        configuration=config_enum,
-        description=payload.get("description"),
+        configuration=data["configuration"],
+        description=data.get("description"),
     )
     try:
         db.session.add(car)
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"message": "VIN должен быть уникальным"}), 400
+        return validation_error_response({"vin": ["VIN must be unique"]})
+    except DataError:
+        db.session.rollback()
+        return validation_error_response({"_schema": ["Invalid data"]})
 
     return jsonify(car_schema.dump(car)), 201
 
@@ -53,30 +70,31 @@ def create_car():
 def update_car(car_id):
     car = Car.query.get_or_404(car_id)
     payload = request.get_json() or {}
-    errors = car_schema.validate(payload, partial=True)
-    if errors:
-        return jsonify({"errors": errors}), 400
+    try:
+        data = car_schema.load(payload, partial=True)
+    except ValidationError as err:
+        return validation_error_response(err.messages)
 
-    if "model" in payload:
-        car.model = CarModelEnum(payload["model"])
-    if "configuration" in payload:
-        car.configuration = CarConfiguration(payload["configuration"])
-
-    for field in ["brand", "year", "color", "engine_power", "vin", "description"]:
-        if field in payload:
-            setattr(car, field, payload[field])
+    for field, value in data.items():
+        setattr(car, field, value)
 
     try:
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"message": "VIN должен быть уникальным"}), 400
+        return validation_error_response({"vin": ["VIN must be unique"]})
+    except DataError:
+        db.session.rollback()
+        return validation_error_response({"_schema": ["Invalid data"]})
 
     return jsonify(car_schema.dump(car))
 
 
 @bp.route("/<int:car_id>", methods=["DELETE"])
 def delete_car(car_id):
+    origin_error = enforce_trusted_delete_origin()
+    if origin_error:
+        return origin_error
     car = Car.query.get_or_404(car_id)
     db.session.delete(car)
     db.session.commit()
@@ -85,6 +103,18 @@ def delete_car(car_id):
 
 @bp.route("/delete-all", methods=["DELETE"])
 def delete_all():
+    origin_error = enforce_trusted_delete_origin()
+    if origin_error:
+        return origin_error
+
+    admin_token = current_app.config.get("ADMIN_TOKEN")
+    if not admin_token:
+        return jsonify({"error": "NotFound"}), 404
+
+    provided_token = request.headers.get("X-Admin-Token")
+    if not provided_token or provided_token != admin_token:
+        return jsonify({"error": "Forbidden", "message": "Admin token required"}), 403
+
     db.session.query(Car).delete()
     db.session.commit()
     return jsonify({"message": "All cars deleted"})

@@ -10,6 +10,7 @@ Flask API для CRUD по автомобилям с валидацией (Marsh
 cp .env.example .env          # при необходимости правим DATABASE_URL/PORT
 docker compose up --build
 # API будет на http://localhost:8000/cars
+# .env не копируется в образ (см. .dockerignore), секреты передавайте через env
 ```
 
 ## Локальная разработка
@@ -33,7 +34,7 @@ pytest
 - `POST /cars` — создать (JSON: brand, model, year, color, engine_power, configuration, vin?, description).
 - `PUT /cars/<id>` — обновить (частичный payload).
 - `DELETE /cars/<id>` — удалить.
-- `DELETE /cars/delete-all` — удалить все.
+- `DELETE /cars/delete-all` — удалить все (только с заголовком `X-Admin-Token`, выключен если ADMIN_TOKEN пуст).
 
 ### Пример запроса/ответа
 ```bash
@@ -84,6 +85,12 @@ print(resp.json())
 ```
 
 Значения `model`: `Модель A|Модель B|Модель C`. `configuration`: `Базовая|Комфорт|Максимальная`. VIN проверяется на длину 17, при отсутствии генерируется автоматически.
+
+### Конфигурация
+- `DATABASE_URL`, `PORT` — как и раньше.
+- `CORS_ORIGINS` — разрешенные Origin (список через запятую, по умолчанию localhost для dev).
+- `CORS_TRUSTED_ORIGINS` — список Origin, с которых разрешены DELETE (по умолчанию совпадает с CORS_ORIGINS).
+- `ADMIN_TOKEN` — включает защищенный `/cars/delete-all` и проверяется через заголовок `X-Admin-Token`. Если не задан, endpoint отдаёт 404.
 
 ## Тесты
 ```bash

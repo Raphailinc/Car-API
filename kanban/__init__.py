@@ -15,7 +15,13 @@ def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
     load_config(app)
     if config_overrides:
         app.config.update(config_overrides)
-    CORS(app)
+    cors_origins = app.config.get("CORS_ORIGINS", [])
+    CORS(
+        app,
+        resources={r"/cars/*": {"origins": cors_origins}},
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "X-Admin-Token"],
+    )
     db.init_app(app)
     ma.init_app(app)
 

@@ -1,14 +1,30 @@
 # Car API
 
-Flask API для CRUD по автомобилям с валидацией (Marshmallow) и конфигом через `.env`. По умолчанию использует SQLite, можно переключить на PostgreSQL через переменную `DATABASE_URL`.
+![CI](https://github.com/Raphailinc/Car-API/actions/workflows/ci.yml/badge.svg)
 
-## Установка и запуск
+Flask API для CRUD по автомобилям с валидацией (Marshmallow) и конфигом через `.env`. По умолчанию использует SQLite, для продакшена рекомендован PostgreSQL.
+
+## Quickstart (Docker)
+```bash
+cp .env.example .env          # при необходимости правим DATABASE_URL/PORT
+docker compose up --build
+# API будет на http://localhost:8000/cars
+```
+
+## Локальная разработка
 ```bash
 python -m venv .venv
 . .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # при необходимости правим DATABASE_URL/PORT
-python manage.py       # запустит на 8000
+pip install -r requirements-dev.txt
+cp .env.example .env          # можно оставить SQLite или указать свой PostgreSQL
+python manage.py              # запустит на 0.0.0.0:8000
+```
+
+Линт и тесты:
+```bash
+ruff check .
+black --check .
+pytest
 ```
 
 ## API
@@ -27,5 +43,6 @@ pytest
 
 ## Примечания
 - Конфиг загружается из `.env` (см. `.env.example`).
+- В Docker Compose используется PostgreSQL (`DATABASE_URL` по умолчанию указывает на сервис `db`); локально можно оставить SQLite.
 - База создаётся автоматически при старте.
 - Уникальность VIN соблюдается.

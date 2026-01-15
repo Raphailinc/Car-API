@@ -1,3 +1,5 @@
+from typing import Any, Mapping
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -8,9 +10,11 @@ db = SQLAlchemy()
 ma = Marshmallow()
 
 
-def create_app() -> Flask:
+def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
     app = Flask(__name__)
     load_config(app)
+    if config_overrides:
+        app.config.update(config_overrides)
     CORS(app)
     db.init_app(app)
     ma.init_app(app)

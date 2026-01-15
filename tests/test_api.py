@@ -7,10 +7,11 @@ from kanban.models import Car
 
 @pytest.fixture()
 def client():
-    app = create_app()
-    app.config.update(
-        SQLALCHEMY_DATABASE_URI="sqlite://",
-        TESTING=True,
+    app = create_app(
+        {
+            "SQLALCHEMY_DATABASE_URI": "sqlite://",
+            "TESTING": True,
+        }
     )
     with app.app_context():
         db.create_all()

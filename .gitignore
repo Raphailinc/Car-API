@@ -6,4 +6,6 @@ __pycache__/
 .idea/
 .vscode/
 cars.db
+.ruff_cache/
+*.db
 .env

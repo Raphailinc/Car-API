@@ -1,6 +1,6 @@
-# Car API
-
 ![CI](https://github.com/Raphailinc/Car-API/actions/workflows/ci.yml/badge.svg)
+
+# Car API
 
 Flask API для CRUD по автомобилям с валидацией (Marshmallow) и конфигом через `.env`. По умолчанию использует SQLite, для продакшена рекомендован PostgreSQL.
 

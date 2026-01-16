@@ -1,5 +1,5 @@
 ![CI](https://github.com/Raphailinc/Car-API/actions/workflows/ci.yml/badge.svg)
-![Coverage](https://img.shields.io/codecov/c/github/Raphailinc/Car-API?label=coverage)
+![Coverage](https://raw.githubusercontent.com/Raphailinc/Car-API/main/badges/coverage.svg)
 
 # Car API
 

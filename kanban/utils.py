@@ -2,7 +2,6 @@ import random
 import re
 import string
 
-
 VIN_TEMPLATE = "WDDUJ76X09A000000"
 
 

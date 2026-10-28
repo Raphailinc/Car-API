@@ -1,14 +1,13 @@
 from marshmallow import Schema, ValidationError, fields, validates, validates_schema
-from marshmallow_enum import EnumField
 
 from .models import CarConfiguration, CarModelEnum
 
 
-class FlexibleEnumField(EnumField):
+class FlexibleEnumField(fields.Field):
     """Enum field that dumps human value and accepts enum key or value."""
 
     def __init__(self, enum, **kwargs):
-        super().__init__(enum, by_value=True, **kwargs)
+        super().__init__(**kwargs)
         self.enum_cls = enum
 
     def _error_message(self) -> str:
@@ -46,37 +45,42 @@ class CarSchema(Schema):
     id = fields.Integer(dump_only=True)
     brand = fields.Str(required=True)
     model = FlexibleEnumField(CarModelEnum, required=True)
-    year = fields.Int(required=True)
+    year = fields.Int(required=True, strict=True)
     color = fields.Str(required=True)
-    engine_power = fields.Int(required=True)
+    engine_power = fields.Int(required=True, strict=True)
     vin = fields.Str(required=False, allow_none=False)
     configuration = FlexibleEnumField(CarConfiguration, required=True)
     description = fields.Str(allow_none=True)
 
     @validates("brand")
-    def validate_brand(self, value):
+    def validate_brand(self, value, **kwargs):
         self._validate_length("brand", value, 1, 50)
 
     @validates("color")
-    def validate_color(self, value):
+    def validate_color(self, value, **kwargs):
         self._validate_length("color", value, 1, 20)
 
     @validates("vin")
-    def validate_vin(self, value):
-        if value and len(value) != 17:
+    def validate_vin(self, value, **kwargs):
+        if len(value) != 17:
             raise ValidationError("vin must be 17 characters")
+
+    @validates("engine_power")
+    def validate_engine_power(self, value, **kwargs):
+        if value <= 0:
+            raise ValidationError("engine_power must be greater than zero")
 
     @validates_schema
     def validate_year(self, data, **kwargs):
         year = data.get("year")
-        if year and (year < 1900 or year > 2100):
+        if year is not None and (year < 1900 or year > 2100):
             raise ValidationError("year must be between 1900 and 2100", field_name="year")
 
     @staticmethod
     def _validate_length(field_name: str, value: str, min_len: int, max_len: int) -> None:
         if value is None:
             raise ValidationError("Field may not be null.")
-        if len(value) < min_len:
+        if len(value.strip()) < min_len:
             raise ValidationError(f"Min length is {min_len}")
         if len(value) > max_len:
             raise ValidationError(f"Max length is {max_len}")

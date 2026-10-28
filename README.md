@@ -44,3 +44,5 @@ curl -X POST http://localhost:8000/cars \
 ```
 
 `GET /cars` lists cars, `PUT /cars/<id>` updates a record and `DELETE /cars/<id>` removes one. See [`kanban/schemas.py`](kanban/schemas.py) for accepted values and validation.
+
+Validation also rejects zero/out-of-range years, non-positive engine power, whitespace-only labels and empty replacement VINs. The schema uses Marshmallow 4 directly, without unused Flask schema adapters. Python 3.11+ is required.

@@ -173,3 +173,28 @@ def test_delete_origin_restricted(make_client):
 
     delete_res = client.delete(f"/cars/{car_id}", headers={"Origin": "http://evil.com"})
     assert delete_res.status_code == 403
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("year", 0),
+        ("year", -1),
+        ("engine_power", 0),
+        ("engine_power", -10),
+        ("brand", "   "),
+        ("color", "  "),
+    ],
+)
+def test_invalid_domain_values_do_not_create_records(client, field, value):
+    response = client.post("/cars", json=base_payload(**{field: value}))
+    assert response.status_code == 400
+    assert field in response.get_json()["fields"]
+    assert client.get("/cars").get_json()["cars"] == []
+
+
+def test_empty_vin_cannot_clear_existing_unique_identifier(client):
+    car = client.post("/cars", json=base_payload()).get_json()
+    response = client.put(f"/cars/{car['id']}", json={"vin": ""})
+    assert response.status_code == 400
+    assert client.get("/cars").get_json()["cars"][0]["vin"] == car["vin"]

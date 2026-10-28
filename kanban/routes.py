@@ -68,7 +68,7 @@ def create_car():
 
 @bp.route("/<int:car_id>", methods=["PUT"])
 def update_car(car_id):
-    car = Car.query.get_or_404(car_id)
+    car = db.get_or_404(Car, car_id)
     payload = request.get_json() or {}
     try:
         data = car_schema.load(payload, partial=True)
@@ -95,7 +95,7 @@ def delete_car(car_id):
     origin_error = enforce_trusted_delete_origin()
     if origin_error:
         return origin_error
-    car = Car.query.get_or_404(car_id)
+    car = db.get_or_404(Car, car_id)
     db.session.delete(car)
     db.session.commit()
     return jsonify({"message": "Car deleted"})

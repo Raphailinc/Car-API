@@ -2,12 +2,10 @@ from typing import Any, Mapping
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from .config import load_config
 
 db = SQLAlchemy()
-ma = Marshmallow()
 
 
 def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
@@ -23,7 +21,6 @@ def create_app(config_overrides: Mapping[str, Any] | None = None) -> Flask:
         allow_headers=["Content-Type", "X-Admin-Token"],
     )
     db.init_app(app)
-    ma.init_app(app)
 
     from .routes import bp as api_bp
 

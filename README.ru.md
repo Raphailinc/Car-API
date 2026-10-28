@@ -1,106 +1,46 @@
-![CI](https://github.com/Raphailinc/Car-API/actions/workflows/ci.yml/badge.svg)
-![Coverage](https://raw.githubusercontent.com/Raphailinc/Car-API/main/badges/coverage.svg)
-
 # Car API
 
-Flask API для CRUD по автомобилям с валидацией (Marshmallow) и конфигом через `.env`. По умолчанию использует SQLite, для продакшена рекомендован PostgreSQL.
+[![CI](https://github.com/Raphailinc/Car-API/actions/workflows/ci.yml/badge.svg)](https://github.com/Raphailinc/Car-API/actions/workflows/ci.yml)
 
-## Quickstart (Docker)
-```bash
-cp .env.example .env          # при необходимости правим DATABASE_URL/PORT
-docker compose up --build
-# API будет на http://localhost:8000/cars
-# .env не копируется в образ (см. .dockerignore), секреты передавайте через env
-```
+[English](README.md) · [Русский](README.ru.md)
 
-## Локальная разработка
+Компактный backend-проект каталога автомобилей: валидация схемы, ограничения БД и предсказуемые ответы CRUD API.
+
+## Возможности
+
+- Marshmallow проверяет входные данные и принимает ключи enum либо отображаемые значения.
+- VIN генерируется при отсутствии; уникальность гарантируется БД.
+- Локально используется SQLite, в Docker Compose — PostgreSQL.
+- Pytest проверяет CRUD, некорректные значения, уникальность VIN и административное удаление.
+
+## Локальный запуск
+
 ```bash
 python -m venv .venv
-. .venv/bin/activate
-pip install -r requirements-dev.txt
-cp .env.example .env          # можно оставить SQLite или указать свой PostgreSQL
-python manage.py              # запустит на 0.0.0.0:8000
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+cp .env.example .env
+python manage.py
 ```
 
-Линт и тесты:
+## Проверки
+
 ```bash
+python -m pytest
 ruff check .
 black --check .
-pytest
 ```
 
-## API
-- `GET /cars` — список машин.
-- `POST /cars` — создать (JSON: brand, model, year, color, engine_power, configuration, vin?, description).
-- `PUT /cars/<id>` — обновить (частичный payload).
-- `DELETE /cars/<id>` — удалить.
-- `DELETE /cars/delete-all` — удалить все (только с заголовком `X-Admin-Token`, выключен если ADMIN_TOKEN пуст).
+## Условия запуска и границы проекта
 
-### Пример запроса/ответа
+API: http://localhost:8000/cars. Требуется Python 3.11+. В .env.example DATABASE_URL оставлен закомментированным: локальный запуск использует SQLite, Compose задаёт PostgreSQL. Массовое удаление выключено без ADMIN_TOKEN и требует заголовок X-Admin-Token. Обычный CRUD не имеет пользовательской аутентификации: это локальный пример API, а не публичный многопользовательский сервис. Схема отклоняет некорректные годы, неположительную мощность, пустые названия и пустой VIN при обновлении.
+
+## Пример API
+
 ```bash
-POST /cars
-{
-  "brand": "Toyota",
-  "model": "Модель A",
-  "year": 2022,
-  "color": "blue",
-  "engine_power": 200,
-  "configuration": "Комфорт"
-}
-```
-Ответ `201`:
-```json
-{"id":1,"brand":"Toyota","model":"Модель A","year":2022,"color":"blue","engine_power":200,"vin":"<auto>","configuration":"Комфорт","description":null}
+curl -X POST http://localhost:8000/cars \
+  -H 'Content-Type: application/json' \
+  -d '{"brand":"Toyota","model":"MODEL_A","year":2023,"color":"blue","engine_power":150,"configuration":"COMFORT"}'
 ```
 
-## Архитектура
-- `kanban/` — app factory, модели, схемы Marshmallow, маршруты `/cars`, утилиты (VIN).
-- `manage.py` — точка входа (локально/в Docker), создаёт БД при старте.
-- `tests/` — pytest с SQLite in-memory, покрывает CRUD и уникальность VIN.
-- `.env`/`config.py` — загрузка DATABASE_URL, переключение SQLite/Postgres.
-
-## Quality
-- Линт: `ruff check .`
-- Формат: `black --check .`
-- Тесты: `pytest` (in-memory SQLite)
-- CI: GitHub Actions (`ci.yml`) — lint + tests на Python 3.11.
-
-## Интеграция
-Пример вызова API из Python:
-```python
-import requests
-
-base = "http://localhost:8000"
-car = {
-    "brand": "Toyota",
-    "model": "Модель A",
-    "year": 2023,
-    "color": "blue",
-    "engine_power": 200,
-    "configuration": "Комфорт",
-}
-resp = requests.post(f"{base}/cars", json=car, timeout=5)
-resp.raise_for_status()
-print(resp.json())
-```
-
-Значения `model`: `Модель A|Модель B|Модель C`. `configuration`: `Базовая|Комфорт|Максимальная`. VIN проверяется на длину 17, при отсутствии генерируется автоматически.
-
-### Конфигурация
-- `DATABASE_URL`, `PORT` — как и раньше.
-- `CORS_ORIGINS` — разрешенные Origin (список через запятую, по умолчанию localhost для dev).
-- `CORS_TRUSTED_ORIGINS` — список Origin, с которых разрешены DELETE (по умолчанию совпадает с CORS_ORIGINS).
-- `ADMIN_TOKEN` — включает защищенный `/cars/delete-all` и проверяется через заголовок `X-Admin-Token`. Если не задан, endpoint отдаёт 404.
-
-## Тесты
-```bash
-pytest
-```
-
-## Примечания
-- Конфиг загружается из `.env` (см. `.env.example`).
-- В Docker Compose используется PostgreSQL (`DATABASE_URL` по умолчанию указывает на сервис `db`); локально можно оставить SQLite.
-- База создаётся автоматически при старте.
-- Уникальность VIN соблюдается.
-
-Валидация отклоняет нулевой или недопустимый год, неположительную мощность, пустые названия и замену VIN на пустую строку. Схемы используют Marshmallow 4 напрямую. Требуется Python 3.11+.
+`GET /cars` — список; `PUT /cars/<id>` — обновление; `DELETE /cars/<id>` — удаление. Допустимые значения описаны в [схеме](kanban/schemas.py).
